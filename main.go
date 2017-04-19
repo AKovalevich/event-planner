@@ -24,7 +24,8 @@ type config struct {
 	DataBase dataBase `json:"database" toml:"database" cfg:"database"`
 }
 
-func main() {
+// Initializes all required components and run migrations
+func init() {
 	// Prepare configuration data
 	config := config{}
 	goConfig.File = "config.toml"
@@ -33,10 +34,15 @@ func main() {
 		panic(err.Error())
 	}
 
+	// Migrate models
+	models.UserMigrate()
+	models.AccountMigrate()
 	models.ImageMigrate()
 	models.TeamMigrate()
 	models.EventMigrate()
+}
 
+func main() {
 	// Serve!
 	app := iris.New()
 	app.Adapt(httprouter.New())
@@ -45,5 +51,5 @@ func main() {
 		ctx.Writef("OK")
 	})
 
-	//app.Listen(":8080")
+	app.Listen(":8080")
 }
