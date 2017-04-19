@@ -5,20 +5,19 @@ import (
 	"errors"
 )
 
-type Account struct {
+type Image struct {
 	gorm.Model
-	User string `json:"user"`
-	Email string `json:"email"`
+	Path string `json:"path"`
 }
 
-// Migrate Team structure
-func AccountMigrate() error {
+// Migrate Image structure
+func ImageMigrate() error {
 	db, err := gorm.Open("mysql", "root:@/planner?charset=utf8&parseTime=True&loc=Local")
-	if !db.HasTable(&Account{}) {
+	if !db.HasTable(&Image{}) {
 		if err != nil {
 			return errors.New("Problem with connect to database")
 		}
-		db.AutoMigrate(&Account{})
+		db.AutoMigrate(&Image{})
 		defer db.Close()
 	}
 
