@@ -1,8 +1,10 @@
 package models
 
 import (
-	"github.com/jinzhu/gorm"
+	"github.com/AKovalevich/event-planner/utils"
+
 	"errors"
+	"github.com/jinzhu/gorm"
 )
 
 type Image struct {
@@ -12,7 +14,7 @@ type Image struct {
 
 // Migrate Image structure
 func ImageMigrate() error {
-	db, err := gorm.Open("mysql", "root:@/planner?charset=utf8&parseTime=True&loc=Local")
+	db, err := utils.GetDB()
 	if !db.HasTable(&Image{}) {
 		if err != nil {
 			return errors.New("Problem with connect to database")

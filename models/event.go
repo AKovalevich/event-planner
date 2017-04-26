@@ -1,9 +1,11 @@
 package models
 
 import (
+	"github.com/AKovalevich/event-planner/utils"
+
+	"errors"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"errors"
 )
 
 type Event struct {
@@ -19,7 +21,7 @@ type Event struct {
 
 // Migrate Event structure
 func EventMigrate() error {
-	db, err := gorm.Open("mysql", "root:@/planner?charset=utf8&parseTime=True&loc=Local")
+	db, err := utils.GetDB()
 	if !db.HasTable(&Event{}) {
 		if err != nil {
 			return errors.New("Problem with connect to database")

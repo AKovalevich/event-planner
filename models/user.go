@@ -1,8 +1,10 @@
 package models
 
 import (
-	"github.com/jinzhu/gorm"
+	"github.com/AKovalevich/event-planner/utils"
+
 	"errors"
+	"github.com/jinzhu/gorm"
 )
 
 type User struct {
@@ -14,7 +16,7 @@ type User struct {
 
 // Migrate User structure
 func UserMigrate() error {
-	db, err := gorm.Open("mysql", "root:@/planner?charset=utf8&parseTime=True&loc=Local")
+	db, err := utils.GetDB()
 	if !db.HasTable(&User{}) {
 		if err != nil {
 			return errors.New("Problem with connect to database")
