@@ -11,7 +11,7 @@ import (
 
 type Team struct {
 	gorm.Model
-	Name string `json:"name" gorm:"type:varchar(100)"`
+	Name string `json:"name" validate:"required" gorm:"type:varchar(100)"`
 	Description string `json:"description" gorm:"size:255"`
 }
 
@@ -27,4 +27,10 @@ func TeamMigrate() error {
 	}
 
 	return nil
+}
+
+func CreateTeam(team *Team) (*Team, error) {
+	validator := utils.GetValidator()
+	err := validator.Struct(team)
+	return team, err
 }
