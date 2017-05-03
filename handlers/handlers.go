@@ -24,18 +24,21 @@ func GetTeam(ctx *iris.Context) {
 func PostAccount(ctx *iris.Context) {
 	ctx.JSON(iris.StatusOK, "OK")
 }
+
+// Create new team
+// Method: POST
 func PostTeam(ctx *iris.Context) {
 	team := &models.Team{}
 
 	if err := ctx.ReadJSON(&team); err != nil {
-		ctx.JSON(iris.StatusBadRequest, err.Error())
+		ctx.JSON(iris.StatusServiceUnavailable, "Service unavailable")
 	} else {
 		team, err := models.CreateTeam(team)
-
 		if err != nil {
-			ctx.JSON(iris.StatusServiceUnavailable, err.Error())
-		}
+			ctx.JSON(iris.StatusServiceUnavailable, GetErrorMessage(iris.StatusServiceUnavailable, err.Error()))
 
-		ctx.JSON(iris.StatusOK, team)
+		} else {
+			ctx.JSON(iris.StatusOK, team)
+		}
 	}
 }

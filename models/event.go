@@ -4,12 +4,12 @@ import (
 	"github.com/AKovalevich/event-planner/utils"
 
 	"errors"
-	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
 type Event struct {
-	gorm.Model
+	BaseModel
 	Title string `json:"title"`
 	Body string `json:"body"`
 	Image Image `json:"image_id"`

@@ -4,11 +4,11 @@ import (
 	"github.com/AKovalevich/event-planner/utils"
 
 	"errors"
-	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm"
 )
 
 type Image struct {
-	gorm.Model
+	BaseModel
 	Path string `json:"path"`
 }
 

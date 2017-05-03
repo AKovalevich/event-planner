@@ -4,11 +4,11 @@ import (
 	"github.com/AKovalevich/event-planner/utils"
 
 	"errors"
-	"github.com/jinzhu/gorm"
+	_"github.com/jinzhu/gorm"
 )
 
 type Account struct {
-	gorm.Model
+	BaseModel
 	User string `json:"user"`
 	Email string `json:"email"`
 }

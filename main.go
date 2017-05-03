@@ -9,8 +9,9 @@ import (
 	"gopkg.in/kataras/iris.v6"
 	"gopkg.in/kataras/iris.v6/adaptors/httprouter"
 	"github.com/crgimenes/goConfig"
-	_ "github.com/crgimenes/goConfig/toml"
 	"github.com/Sirupsen/logrus"
+	"github.com/asaskevich/govalidator"
+	_ "github.com/crgimenes/goConfig/toml"
 )
 
 // Initializes all required components and run migrations
@@ -30,6 +31,9 @@ func init() {
 	} else {
 		log.Level = logrus.InfoLevel
 	}
+
+	// Prepare structure validators
+	govalidator.SetFieldsRequiredByDefault(true)
 
 	// Migrate models
 	models.UserMigrate()
@@ -53,5 +57,5 @@ func main() {
 	app.Get("team/:team_id", handlers.GetTeam);
 
 
-	app.Listen(":8082")
+	app.Listen(":8081")
 }
