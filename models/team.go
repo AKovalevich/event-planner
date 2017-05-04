@@ -15,6 +15,8 @@ type Team struct {
 	BaseModel `valid:"optional"`
 	Name string `json:"name" valid:"alphanum,required" gorm:"type:varchar(100)"`
 	Description string `json:"description" valid:"-" gorm:"size:255"`
+	Users []User `json:"users" valid:"-" gorm:"many2many:team_user"`
+	Accounts []Account `json:"accounts" valid:"-" gorm:"many2many:team_account"`
 }
 
 // Migrate Team structure

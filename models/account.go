@@ -11,6 +11,7 @@ type Account struct {
 	BaseModel
 	User string `json:"user"`
 	Email string `json:"email"`
+	Teams []Team `json:"teams" gorm:"many2many:team_account"`
 }
 
 // Migrate Team structure

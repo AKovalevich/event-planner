@@ -12,6 +12,7 @@ type User struct {
 	Name string `json:"name"`
 	Email string `json:"email"`
 	Password string `json:"password"`
+	Teams []Team `json:"teams" gorm:"many2many:team_user"`
 }
 
 // Migrate User structure

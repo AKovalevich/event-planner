@@ -10,6 +10,7 @@ import (
 type Image struct {
 	BaseModel
 	Path string `json:"path"`
+	Team Team `json:"team"`
 }
 
 // Migrate Image structure

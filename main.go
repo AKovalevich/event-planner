@@ -48,13 +48,13 @@ func main() {
 	app := iris.New()
 	app.Adapt(httprouter.New())
 
-	app.Post("upload/images", handlers.PostImage);
-	app.Post("account", handlers.PostAccount);
-	app.Post("event", handlers.PostEvent);
-	app.Post("team", handlers.PostTeam);
-	app.Get("team/:team_id/event", handlers.GetTeamEvent);
-	app.Get("team/:team_id/account", handlers.GetTeamAccount);
-	app.Get("team/:team_id", handlers.GetTeam);
+	app.Post("upload/images", handlers.PostImage)
+	app.Post("account", handlers.PostAccount)
+	app.Post("event", handlers.PostEvent)
+	app.Post("team", handlers.PostTeam)
+	app.Get("team/:team_id/event", handlers.GetTeamEvent)
+	app.Get("team/:team_id/account", handlers.GetTeamAccount)
+	app.Get("team/:team_id", handlers.GetTeam)
 
 
 	app.Listen(":8081")

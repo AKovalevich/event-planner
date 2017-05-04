@@ -6,6 +6,9 @@ import (
 	"gopkg.in/kataras/iris.v6"
 )
 
+// +---------------------------------+
+// |         Entity handlers         |
+// +---------------------------------+
 func PostImage(ctx *iris.Context) {
 	ctx.JSON(iris.StatusOK, "OK")
 }
@@ -42,3 +45,7 @@ func PostTeam(ctx *iris.Context) {
 		}
 	}
 }
+
+// +---------------------------------+
+// |          Auth handlers          |
+// +---------------------------------+
