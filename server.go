@@ -2,34 +2,32 @@ package main
 
 import (
 	"github.com/AKovalevich/event-planner/models"
-	"github.com/AKovalevich/event-planner/handlers"
-	"github.com/AKovalevich/event-planner/config"
+	"github.com/AKovalevich/event-planner/apis"
+	"github.com/AKovalevich/event-planner/response"
+	"github.com/AKovalevich/event-planner/app"
 
 	"log"
 	"gopkg.in/kataras/iris.v6"
 	"gopkg.in/kataras/iris.v6/adaptors/httprouter"
 	"github.com/crgimenes/goConfig"
-	"github.com/Sirupsen/logrus"
 	"github.com/asaskevich/govalidator"
 	_ "github.com/crgimenes/goConfig/toml"
+	"fmt"
 )
 
 // Initializes all required components and run migrations
 func init() {
 	// Prepare configuration data
-	config := config.Get()
+	config := app.Config()
 	goConfig.File = "config.toml"
 	err := goConfig.Parse(config)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log := logrus.New()
-	if config.Debug {
-		log.Level = logrus.DebugLevel
-		log.Debug("Debug mode is on.")
-	} else {
-		log.Level = logrus.InfoLevel
+	// load error messages
+	if err := response.LoadMessages("config/errors.yaml"); err != nil {
+		panic(fmt.Errorf("Failed to read the error message file: %s", err))
 	}
 
 	// Prepare structure validators
@@ -48,14 +46,13 @@ func main() {
 	app := iris.New()
 	app.Adapt(httprouter.New())
 
-	app.Post("upload/images", handlers.PostImage)
-	app.Post("account", handlers.PostAccount)
-	app.Post("event", handlers.PostEvent)
-	app.Post("team", handlers.PostTeam)
-	app.Get("team/:team_id/event", handlers.GetTeamEvent)
-	app.Get("team/:team_id/account", handlers.GetTeamAccount)
-	app.Get("team/:team_id", handlers.GetTeam)
-
+	app.Post("upload/images", apis.PostImage)
+	app.Post("account", apis.PostAccount)
+	app.Post("event", apis.PostEvent)
+	app.Post("team", apis.PostTeam)
+	app.Get("team/:team_id/event", apis.GetTeamEvent)
+	app.Get("team/:team_id/account", apis.GetTeamAccount)
+	app.Get("team/:team_id", apis.GetTeam)
 
 	app.Listen(":8081")
 }

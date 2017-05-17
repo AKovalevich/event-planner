@@ -1,5 +1,5 @@
 domain = "example.com"
-debug = true
+debug = false
 
 [database]
     host = "localhost"

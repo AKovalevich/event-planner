@@ -11,6 +11,7 @@ import (
 	"time"
 )
 
+//
 type Team struct {
 	BaseModel `valid:"optional"`
 	Name string `json:"name" valid:"alphanum,required" gorm:"type:varchar(100)"`
@@ -33,6 +34,7 @@ func TeamMigrate() error {
 	return nil
 }
 
+//
 func CreateTeam(team *Team) (*Team, error) {
 	// Base structure validation
 	if _, err := govalidator.ValidateStruct(team); err != nil {
@@ -61,6 +63,26 @@ func CreateTeam(team *Team) (*Team, error) {
 	// In case if something is wrong with MySQL insert operation
 	if team.ID == 0 {
 		return team, errors.New("Service unavalible")
+	}
+
+	return team, nil
+}
+
+//
+func GetTeam(id string) (*Team, error) {
+	team := &Team{}
+
+	db, err := utils.GetDB()
+	db.Close()
+	if err != nil {
+		return team, err
+	}
+	if err := db.Where("id = ?", id).First(&team).Error; err != nil {
+		return team, err
+	}
+
+	if team.ID == 0 {
+		return team, errors.New("Team " + string(id) + " not found")
 	}
 
 	return team, nil

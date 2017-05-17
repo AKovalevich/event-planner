@@ -1,9 +1,8 @@
-package config
+package app
 
 import "sync"
 
 // Application configuration structure, contains main parameters for application
-
 // Database configuration
 type dataBase struct {
 	Host string `json:"host" toml:"host" cfg:"host" cfgDefault:"localhost"`
@@ -23,7 +22,8 @@ type appConfig struct {
 var config *appConfig
 var once sync.Once
 
-func Get() *appConfig {
+//
+func Config() *appConfig {
 	once.Do(func() {
 		config = &appConfig{}
 	})
