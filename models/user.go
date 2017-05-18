@@ -28,3 +28,22 @@ func UserMigrate() error {
 
 	return nil
 }
+
+func GetUserByEmail(email string) (*User, error) {
+	user := &User{}
+
+	db, err := utils.GetDB()
+	if err != nil {
+		return user, err
+	}
+
+	if err:= db.Where("email = ?", email).First(&user).Error; err != nil {
+		return user, err
+	}
+
+	if user.Email == "" {
+		return user, errors.New("Can't load user")
+	}
+
+	return user, nil
+}

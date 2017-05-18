@@ -1,5 +1,7 @@
 domain = "example.com"
 debug = false
+secret = "SQ3tEErWMv" # What shouldn't be committed will be done
+
 
 [database]
     host = "localhost"

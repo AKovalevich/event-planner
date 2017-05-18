@@ -17,6 +17,7 @@ type appConfig struct {
 	Domain string `json:"domain" toml:"domain" cfg:"domain" cfgDefault:"localhost"`
 	Debug bool `json:"debug" toml:"debug" cfg:"debug" cfgDefault:"false"`
 	DataBase dataBase `json:"database" toml:"database" cfg:"database"`
+	Secret string `json:"secret" toml:"secret" cfg:"secret"`
 }
 
 var config *appConfig

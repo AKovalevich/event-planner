@@ -53,6 +53,7 @@ func main() {
 	app.Get("team/:team_id/event", apis.GetTeamEvent)
 	app.Get("team/:team_id/account", apis.GetTeamAccount)
 	app.Get("team/:team_id", apis.GetTeam)
+	app.Post("auth", apis.Auth)
 
 	app.Listen(":8081")
 }
