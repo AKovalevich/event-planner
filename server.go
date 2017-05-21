@@ -71,7 +71,9 @@ func main() {
 		server.Use(customLogger)
 	}
 
+	scopeHandler := middlewares.NewRequestScope()
 	authEndpoints := server.Party("/api/v1/auth/")
+	authEndpoints.Use(scopeHandler)
 	{
 		authEndpoints.Post("token", apis.AuthToken)
 		authEndpoints.Post("token/refresh", apis.AuthTokenRefresh)
@@ -81,6 +83,7 @@ func main() {
 	authHandler := middlewares.NewAuthorization()
 	authorizedEndpoints := server.Party("/api/v1/")
 	authorizedEndpoints.Use(authHandler)
+	authorizedEndpoints.Use(scopeHandler)
 	{
 		authorizedEndpoints.Post("account", apis.PostAccount)
 		authorizedEndpoints.Post("event", apis.PostEvent)
