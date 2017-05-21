@@ -5,17 +5,21 @@ import (
 
 	"gopkg.in/kataras/iris.v6"
 	"github.com/AKovalevich/event-planner/response"
+	"github.com/AKovalevich/event-planner/app"
 )
 
 // Create new team
 // Method: POST
 func PostTeam(ctx *iris.Context) {
+	// get request scope
+	scope := ctx.Get("request_scope")
+
 	team := &models.Team{}
 
 	if err := ctx.ReadJSON(&team); err != nil {
 		ctx.JSON(iris.StatusServiceUnavailable, "Service unavailable")
 	} else {
-		team, err := models.CreateTeam(team)
+		team, err := models.CreateTeam(team, scope.(app.RequestScope).GetTx())
 		if err != nil {
 			res := response.InternalServerError("Can't create team", err.Error())
 			ctx.JSON(res.StatusCode(), res.Struct())
@@ -33,8 +37,11 @@ func GetTeamEvent(ctx *iris.Context) {
 
 //
 func GetTeamAccount(ctx *iris.Context) {
+	// get request scope
+	scope := ctx.Get("request_scope")
+
 	team_id := ctx.Param("team_id")
-	team, err := models.GetTeam(team_id)
+	team, err := models.GetTeam(team_id, scope.(app.RequestScope).GetTx())
 	if err != nil {
 		res := response.InternalServerError("Can't load team", err.Error())
 		ctx.JSON(res.StatusCode(), res.Struct())
@@ -46,8 +53,11 @@ func GetTeamAccount(ctx *iris.Context) {
 
 //
 func GetTeam(ctx *iris.Context) {
+	// get request scope
+	scope := ctx.Get("request_scope")
+
 	team_id := ctx.Param("team_id")
-	team, err := models.GetTeam(team_id)
+	team, err := models.GetTeam(team_id, scope.(app.RequestScope).GetTx())
 	if err != nil {
 		res := response.InternalServerError("Can't load team", err.Error())
 		ctx.JSON(res.StatusCode(), res.Struct())

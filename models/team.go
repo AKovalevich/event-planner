@@ -8,6 +8,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/asaskevich/govalidator"
 	"time"
+	"github.com/jinzhu/gorm"
 )
 
 //
@@ -35,7 +36,7 @@ func TeamMigrate() error {
 }
 
 //
-func CreateTeam(team *Team) (*Team, error) {
+func CreateTeam(team *Team, tx interface{}) (*Team, error) {
 	// Base structure validation
 	if _, err := govalidator.ValidateStruct(team); err != nil {
 		return team, err
@@ -43,12 +44,8 @@ func CreateTeam(team *Team) (*Team, error) {
 
 	// Check that we still don't have a team with the same name
 	// @TODO need to move to custom validation tag
-	db, err := utils.GetDB()
-	if err != nil {
-		return team, err
-	}
 	existingTeam := &Team{}
-	db.Where("name = ?", team.Name).First(&existingTeam)
+	tx.(*gorm.DB).Where("name = ?", team.Name).First(&existingTeam)
 	if len(existingTeam.Name) > 0 {
 		return team, errors.New("Team already exist")
 	}
@@ -58,7 +55,7 @@ func CreateTeam(team *Team) (*Team, error) {
 	team.CreatedAt = time.Now().UTC().UnixNano() / int64(time.Second)
 
 	// Create new team
-	db.Create(&team)
+	tx.(*gorm.DB).Create(&team)
 
 	// In case if something is wrong with MySQL insert operation
 	if team.ID == 0 {
@@ -69,15 +66,10 @@ func CreateTeam(team *Team) (*Team, error) {
 }
 
 //
-func GetTeam(id string) (*Team, error) {
+func GetTeam(id string, tx interface{}) (*Team, error) {
 	team := &Team{}
 
-	db, err := utils.GetDB()
-	db.Close()
-	if err != nil {
-		return team, err
-	}
-	if err := db.Where("id = ?", id).First(&team).Error; err != nil {
+	if err := tx.(*gorm.DB).Where("id = ?", id).First(&team).Error; err != nil {
 		return team, err
 	}
 
