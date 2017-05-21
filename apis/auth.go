@@ -3,17 +3,136 @@ package apis
 import (
 	"github.com/AKovalevich/event-planner/response"
 	"github.com/AKovalevich/event-planner/models"
-	"github.com/AKovalevich/event-planner/app"
+	"github.com/AKovalevich/event-planner/utils"
 
-	"github.com/dgrijalva/jwt-go"
 	"gopkg.in/kataras/iris.v6"
-	"encoding/hex"
-	"crypto/md5"
 	"time"
+	"fmt"
 )
 
+//
+func AuthRegister(ctx *iris.Context) {
+	credentials := models.Credentials{}
+	err := ctx.ReadJSON(&credentials)
+	if err != nil {
+		res := response.InternalServerError("", err.Error())
+		ctx.JSON(res.StatusCode(), res.Struct())
+		return
+	}
 
-func Auth(ctx *iris.Context) {
+	existingUser, err := models.GetUserByEmail(credentials.Email)
+	if err != nil {
+		res := response.InternalServerError("", err.Error())
+		ctx.JSON(res.StatusCode(), res.Struct())
+		return
+	}
+
+	if existingUser.Email != "" {
+		res := response.EntityAlreadyExists("User")
+		ctx.JSON(res.StatusCode(), res.Struct())
+		return
+	}
+
+	// create new user via credentials
+	user := &models.User{
+		Email: credentials.Email,
+		Password: utils.HashMd5(credentials.Password),
+	}
+	user, err = models.CreateUser(user)
+	if err != nil {
+		res := response.InternalServerError("", err.Error())
+		ctx.JSON(res.StatusCode(), res.Struct())
+		return
+	}
+
+	// create new team
+	var users = []models.User{}
+	users = append(users, *user)
+	var team = &models.Team{
+		Name: fmt.Sprintf("team-%d", user.ID),
+		Status: false,
+		Users: users,
+	}
+	team, err = models.CreateTeam(team)
+	if err != nil {
+		res := response.InternalServerError("", err.Error())
+		ctx.JSON(res.StatusCode(), res.Struct())
+		return
+	}
+
+	// generate token for new user
+	expireToken := time.Now().Add(time.Hour * 666).Unix()
+	signedToken, err := models.GenerateToken(user, ctx.Host(), expireToken)
+	if err != nil {
+		res := response.InternalServerError("", err.Error())
+		ctx.JSON(res.StatusCode(), res.Struct())
+		return
+	}
+
+	token, err := models.SaveToken(signedToken, expireToken, user)
+	if err != nil {
+		res := response.InternalServerError("", err.Error())
+		ctx.JSON(res.StatusCode(), res.Struct())
+		return
+	}
+
+	ctx.JSON(iris.StatusOK, iris.Map{"token": signedToken, "refresh_token": token.RefreshToken, "expires at": token.ExpiresAt})
+}
+
+//
+func AuthTokenRefresh(ctx *iris.Context) {
+	var tokenRefresh = struct{
+		Token string `json:"token"`
+		RefreshToken string `json:"refresh_token"`
+	}{}
+
+	err := ctx.ReadJSON(&tokenRefresh)
+	if err != nil {
+		res := response.InternalServerError("", err.Error())
+		ctx.JSON(res.StatusCode(), res.Struct())
+		return
+	}
+
+	token, err := models.LoadToken(tokenRefresh.Token)
+	if err != nil {
+		res := response.InternalServerError("", err.Error())
+		ctx.JSON(res.StatusCode(), res.Struct())
+		return
+	}
+
+	if token.Token == "" || token.RefreshToken == "" {
+		res := response.NotFound("Token")
+		ctx.JSON(res.StatusCode(), res.Struct())
+		return
+	}
+
+	if token.RefreshToken != tokenRefresh.RefreshToken {
+		res := response.Unauthorized("Invalid token")
+		ctx.JSON(res.StatusCode(), res.Struct())
+		return
+	}
+
+	// refresh token
+	if err != nil {
+		res := response.InternalServerError("", err.Error())
+		ctx.JSON(res.StatusCode(), res.Struct())
+		return
+	}
+
+	// update token
+	err = token.UpdateToken(&token.User, ctx.Host())
+	if err != nil {
+		res := response.InternalServerError("", err.Error())
+		ctx.JSON(res.StatusCode(), res.Struct())
+		return
+	}
+
+	ctx.JSON(iris.StatusOK, iris.Map{"token": token.Token, "refresh_token": token.RefreshToken, "expires at": token.ExpiresAt})
+	return
+}
+
+//
+func AuthToken(ctx *iris.Context) {
 	credentials := models.Credentials{}
 	err := ctx.ReadJSON(&credentials)
 	if err != nil {
@@ -23,47 +142,53 @@ func Auth(ctx *iris.Context) {
 	}
 
 	// prepare password hash
-	hash := md5.New()
-	hash.Write([]byte(credentials.Password))
-	hashedPassword := hex.EncodeToString(hash.Sum(nil))
+	hashedPassword := utils.HashMd5(credentials.Password)
 
-	// try to load user by password and email.
+	// try to load user by password and email
 	user, err := models.GetUserByEmail(credentials.Email)
 	if err != nil {
 		res := response.NotFound("User")
 		ctx.JSON(res.StatusCode(), res.Struct())
 		return
 	}
-	if credentials.Email == "test@test.com" && credentials.Password == hashedPassword { // "test" - "098f6bcd4621d373cade4e832627b4f6"
-		// expires the token and cookie in 1 hour
-		expireToken := time.Now().Add(time.Hour * 666).Unix()
 
-		claims := models.Claims {
-			jwt.StandardClaims {
-				ExpiresAt: expireToken,
-				Issuer:    "localhost:9000",
-			},
-			*user,
-		}
-
-		// create the token using your claims
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-		secret := app.Config().Secret
-
-		// signs the token with a secret.
-		signedToken, err := token.SignedString([]byte(secret))
-
+	if credentials.Email == user.Email && utils.HashMd5(credentials.Password) == hashedPassword { // "test" - "098f6bcd4621d373cade4e832627b4f6"
+		// in case if already exists return token
+		existingToken, err := models.LoadTokenQuery(struct{id uint}{id: user.TokenID})
 		if err != nil {
 			res := response.InternalServerError("", err.Error())
 			ctx.JSON(res.StatusCode(), res.Struct())
 			return
 		}
 
-		ctx.JSON(iris.StatusOK, signedToken)
+		var token = &models.Token{}
+
+		if existingToken.Token != "" {
+			token.Token = existingToken.Token
+			token.RefreshToken = existingToken.RefreshToken
+			token.ExpiresAt = existingToken.ExpiresAt
+
+		} else {
+			expireToken := time.Now().Add(time.Hour * 666).Unix()
+			signedToken, err := models.GenerateToken(user, ctx.Host(), expireToken)
+			if err != nil {
+				res := response.InternalServerError("", err.Error())
+				ctx.JSON(res.StatusCode(), res.Struct())
+				return
+			}
+
+			token, err = models.SaveToken(signedToken, expireToken, user)
+			if err != nil {
+				res := response.InternalServerError("", err.Error())
+				ctx.JSON(res.StatusCode(), res.Struct())
+				return
+			}
+		}
+
+		ctx.JSON(iris.StatusOK, iris.Map{"token": token.Token, "refresh_token": token.RefreshToken, "expires at": token.ExpiresAt})
+		return
 	}
 
 	res := response.Unauthorized("")
 	ctx.JSON(res.StatusCode(), res.Struct())
-	return
 }

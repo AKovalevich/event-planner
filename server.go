@@ -1,59 +1,96 @@
 package main
 
 import (
+	"github.com/AKovalevich/event-planner/middlewares"
+	"github.com/AKovalevich/event-planner/response"
 	"github.com/AKovalevich/event-planner/models"
 	"github.com/AKovalevich/event-planner/apis"
-	"github.com/AKovalevich/event-planner/response"
 	"github.com/AKovalevich/event-planner/app"
 
-	"log"
 	"gopkg.in/kataras/iris.v6"
 	"gopkg.in/kataras/iris.v6/adaptors/httprouter"
-	"github.com/crgimenes/goConfig"
-	"github.com/asaskevich/govalidator"
-	_ "github.com/crgimenes/goConfig/toml"
+	"github.com/jinzhu/configor"
+	"log"
 	"fmt"
+	"github.com/asaskevich/govalidator"
+	"gopkg.in/kataras/iris.v6/middleware/logger"
+
 )
 
 // Initializes all required components and run migrations
 func init() {
-	// Prepare configuration data
+
+	// Prepare Application configuration
+	println("Parse configuration file - config.toml...")
 	config := app.Config()
-	goConfig.File = "config.toml"
-	err := goConfig.Parse(config)
+	err := configor.Load(config, "config.toml")
 	if err != nil {
 		log.Fatal(err)
 	}
+	println("Done")
 
+	println("Prepare srror messages...")
 	// load error messages
 	if err := response.LoadMessages("config/errors.yaml"); err != nil {
 		panic(fmt.Errorf("Failed to read the error message file: %s", err))
 	}
+	println("Done")
 
-	// Prepare structure validators
+	// prepare structure validators
 	govalidator.SetFieldsRequiredByDefault(true)
 
-	// Migrate models
+	println("Start model migrations...")
+	// migrate models
 	models.UserMigrate()
 	models.AccountMigrate()
 	models.ImageMigrate()
 	models.TeamMigrate()
 	models.EventMigrate()
+	models.TokenMigrate()
+	println("Done")
 }
 
 func main() {
-	// Serve!
-	app := iris.New()
-	app.Adapt(httprouter.New())
+	// serve!
+	server := iris.New()
+	server.Adapt(httprouter.New())
 
-	app.Post("upload/images", apis.PostImage)
-	app.Post("account", apis.PostAccount)
-	app.Post("event", apis.PostEvent)
-	app.Post("team", apis.PostTeam)
-	app.Get("team/:team_id/event", apis.GetTeamEvent)
-	app.Get("team/:team_id/account", apis.GetTeamAccount)
-	app.Get("team/:team_id", apis.GetTeam)
-	app.Post("auth", apis.Auth)
+	if app.Config().Debug {
+		server.Adapt(iris.DevLogger())
+		customLogger := logger.New(logger.Config{
+			// Status displays status code
+			Status: true,
+			// IP displays request's remote address
+			IP: true,
+			// Method displays the http method
+			Method: true,
+			// Path displays the request path
+			Path: true,
+		})
 
-	app.Listen(":8081")
+		server.Use(customLogger)
+	}
+
+	authEndpoints := server.Party("/api/v1/auth/")
+	{
+		authEndpoints.Post("token", apis.AuthToken)
+		authEndpoints.Post("token/refresh", apis.AuthTokenRefresh)
+		authEndpoints.Post("register", apis.AuthRegister)
+	}
+
+	authHandler := middlewares.NewAuthorization()
+	authorizedEndpoints := server.Party("/api/v1/")
+	authorizedEndpoints.Use(authHandler)
+	{
+		authorizedEndpoints.Post("account", apis.PostAccount)
+		authorizedEndpoints.Post("event", apis.PostEvent)
+		authorizedEndpoints.Post("team", apis.PostTeam)
+		authorizedEndpoints.Post("team/:team_id/image", apis.PostImage)
+		authorizedEndpoints.Get("team/:team_id/event", apis.GetTeamEvent)
+		authorizedEndpoints.Get("team/:team_id/account", apis.GetTeamAccount)
+		authorizedEndpoints.Get("team/:team_id", apis.GetTeam)
+		authorizedEndpoints.Get("user/:user_id/team", apis.GetUserTeam)
+	}
+
+	server.Listen(":8081")
 }

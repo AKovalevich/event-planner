@@ -11,3 +11,9 @@ UNAUTHORIZED:
 
 INVALID_DATA:
   message: "There is some problem with the data you submitted. See \"details\" for more information."
+
+ENTITY_ALREADY_EXISTS:
+  message: "{entity} already exists"
+
+ACCESS_DENIED:
+  message: "Access denied"

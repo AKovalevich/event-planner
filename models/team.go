@@ -14,10 +14,11 @@ import (
 //
 type Team struct {
 	BaseModel `valid:"optional"`
-	Name string `json:"name" valid:"alphanum,required" gorm:"type:varchar(100)"`
+	Name string `json:"name" valid:"required" gorm:"type:varchar(100)"`
 	Description string `json:"description" valid:"-" gorm:"size:255"`
-	Users []User `json:"users" valid:"-" gorm:"many2many:team_user"`
-	Accounts []Account `json:"accounts" valid:"-" gorm:"many2many:team_account"`
+	Users []User `json:"users, omitempty" valid:"-" gorm:"many2many:team_user"`
+	Accounts []Account `json:"accounts, omitempty" valid:"-" gorm:"many2many:team_account"`
+	Status bool `json:"status" valid:"-"`
 }
 
 // Migrate Team structure

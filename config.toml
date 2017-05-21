@@ -1,5 +1,6 @@
+port = "8085"
 domain = "example.com"
-debug = false
+debug = true
 secret = "SQ3tEErWMv" # What shouldn't be committed will be done
 
 
@@ -9,4 +10,3 @@ secret = "SQ3tEErWMv" # What shouldn't be committed will be done
 	user = "root"
 	password = ""
 	name = "dbplanner"
-
