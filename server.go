@@ -7,14 +7,13 @@ import (
 	"github.com/AKovalevich/event-planner/apis"
 	"github.com/AKovalevich/event-planner/app"
 
-	"gopkg.in/kataras/iris.v6"
 	"gopkg.in/kataras/iris.v6/adaptors/httprouter"
+	"gopkg.in/kataras/iris.v6/middleware/logger"
+	"github.com/asaskevich/govalidator"
 	"github.com/jinzhu/configor"
+	"gopkg.in/kataras/iris.v6"
 	"log"
 	"fmt"
-	"github.com/asaskevich/govalidator"
-	"gopkg.in/kataras/iris.v6/middleware/logger"
-
 )
 
 // Initializes all required components and run migrations
@@ -82,8 +81,8 @@ func main() {
 
 	authHandler := middlewares.NewAuthorization()
 	authorizedEndpoints := server.Party("/api/v1/")
-	authorizedEndpoints.Use(authHandler)
 	authorizedEndpoints.Use(scopeHandler)
+	authorizedEndpoints.Use(authHandler)
 	{
 		authorizedEndpoints.Post("account", apis.PostAccount)
 		authorizedEndpoints.Post("event", apis.PostEvent)

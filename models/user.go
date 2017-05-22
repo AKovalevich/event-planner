@@ -6,6 +6,7 @@ import (
 	"github.com/asaskevich/govalidator"
 	"errors"
 	"time"
+	"github.com/jinzhu/gorm"
 )
 
 //
@@ -33,21 +34,16 @@ func UserMigrate() error {
 }
 
 //
-func GetUserByEmail(email string) (*User, error) {
+func GetUserByEmail(email string, tx interface{}) (*User, error) {
 	user := &User{}
 
-	db, err := utils.GetDB()
-	if err != nil {
-		return user, err
-	}
-
-	db.Where("email = ?", email).First(&user);
+	tx.(*gorm.DB).Where("email = ?", email).First(&user);
 
 	return user, nil
 }
 
 //
-func CreateUser(user *User) (*User, error) {
+func CreateUser(user *User, tx interface{}) (*User, error) {
 	// Base structure validation
 	if _, err := govalidator.ValidateStruct(user); err != nil {
 		return user, err
@@ -55,11 +51,7 @@ func CreateUser(user *User) (*User, error) {
 
 	// Check that we still don't have a team with the same name
 	// @TODO need to move to custom validation tag
-	db, err := utils.GetDB()
-	if err != nil {
-		return user, err
-	}
-	existingUser, err := GetUserByEmail(user.Email)
+	existingUser, err := GetUserByEmail(user.Email, tx)
 	if err != nil {
 		return user, err
 	}
@@ -72,7 +64,7 @@ func CreateUser(user *User) (*User, error) {
 	user.CreatedAt = time.Now().UTC().UnixNano() / int64(time.Second)
 
 	// Create new team
-	db.Create(&user)
+	tx.(*gorm.DB).Create(&user)
 
 	// In case if something is wrong with MySQL insert operation
 	if user.ID == 0 {
@@ -83,12 +75,8 @@ func CreateUser(user *User) (*User, error) {
 }
 
 //
-func (user *User) LoadUserAssociations() error {
-	db, err := utils.GetDB()
-	if err != nil {
-		return err
-	}
-	db.Preload("Teams").Preload("Role").Find(&user)
+func (user *User) LoadUserAssociations(tx interface{}) error {
+	tx.(*gorm.DB).Preload("Teams").Preload("Role").Find(&user)
 
 	return nil
 }

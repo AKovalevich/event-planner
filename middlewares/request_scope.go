@@ -1,13 +1,13 @@
 package middlewares
 
 import (
-	"github.com/AKovalevich/event-planner/app"
 	"github.com/AKovalevich/event-planner/utils"
+	"github.com/AKovalevich/event-planner/app"
 
 	"gopkg.in/kataras/iris.v6"
+	"github.com/jinzhu/gorm"
 	"time"
 	"log"
-	"github.com/jinzhu/gorm"
 )
 
 type requestScopeMiddleware struct {}

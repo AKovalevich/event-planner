@@ -1,9 +1,9 @@
 package utils
 
 import (
+	"github.com/AKovalevich/event-planner/app"
 	"crypto/md5"
 	"encoding/hex"
-	"github.com/AKovalevich/event-planner/app"
 )
 
 //

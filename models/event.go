@@ -3,9 +3,9 @@ package models
 import (
 	"github.com/AKovalevich/event-planner/utils"
 
-	"errors"
-	_ "github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+	_ "github.com/jinzhu/gorm"
+	"errors"
 )
 
 type Event struct {

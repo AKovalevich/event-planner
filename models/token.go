@@ -6,6 +6,7 @@ import (
 	"time"
 	"errors"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/jinzhu/gorm"
 )
 
 type Token struct {
@@ -41,13 +42,7 @@ func (token *Token) Expired() bool {
 }
 
 //
-func (token *Token) UpdateToken(user *User, issuer string) error {
-	db, err := utils.GetDB()
-	defer db.Close()
-	if err != nil {
-		return err
-	}
-
+func (token *Token) UpdateToken(user *User, issuer string, tx interface{}) error {
 	expireToken := time.Now().Add(time.Hour * 666).Unix()
 	newToken, err := GenerateToken(user, issuer, expireToken)
 	if err != nil {
@@ -57,19 +52,13 @@ func (token *Token) UpdateToken(user *User, issuer string) error {
 	token.RefreshToken = newRefreshToken
 	token.Token = newToken
 	token.UpdatedAt = time.Now().UTC().UnixNano() / int64(time.Second)
-	db.Model(&token).Omit("id", "created_at", "deleted").Update(token)
+	tx.(*gorm.DB).Model(&token).Omit("id", "created_at", "deleted").Update(token)
 
 	return nil
 }
 
 //
-func SaveToken(tokenString string, expires_at int64, user *User) (*Token, error) {
-	db, err := utils.GetDB()
-	defer db.Close()
-	if err != nil {
-		return &Token{}, err
-	}
-
+func SaveToken(tokenString string, expires_at int64, user *User, tx interface{}) (*Token, error) {
 	secret := app.Config().Secret
 	var token = &Token{
 		Token: tokenString,
@@ -82,7 +71,7 @@ func SaveToken(tokenString string, expires_at int64, user *User) (*Token, error)
 	token.UpdatedAt = time.Now().UTC().UnixNano() / int64(time.Second)
 	token.Deleted = false
 
-	if err := db.Save(token).Error; err != nil {
+	if err := tx.(*gorm.DB).Save(token).Error; err != nil {
 		return &Token{}, err
 	}
 
@@ -90,43 +79,26 @@ func SaveToken(tokenString string, expires_at int64, user *User) (*Token, error)
 }
 
 //
-func LoadTokenQuery(query interface{}) (*Token, error) {
+func LoadTokenQuery(query interface{}, tx interface{}) (*Token, error) {
 	var token = &Token{}
-	db, err := utils.GetDB()
-	defer db.Close()
-	if err != nil {
-		return token, err
-	}
 
-	db.Where(query).First(&token)
+	tx.(*gorm.DB).Where(query).First(&token)
 
 	return token, nil
 }
 
 //
-func LoadToken(tokenString string) (*Token, error) {
+func LoadToken(tokenString string, tx interface{}) (*Token, error) {
 	var token = &Token{}
 
-	db, err := utils.GetDB()
-	defer db.Close()
-	if err != nil {
-		return token, err
-	}
-
-	db.Where("token = ?", tokenString).First(&token)
+	tx.(*gorm.DB).Where("token = ?", tokenString).First(&token)
 
 	return token, nil
 }
 
 //
-func DeleteToken(tokenString string) error {
-	db, err := utils.GetDB()
-	defer db.Close()
-	if err != nil {
-		return err
-	}
-
-	if err = db.Where("token = ?", tokenString).Delete(Token{}).Error; err != nil {
+func DeleteToken(tokenString string, tx interface{}) error {
+	if err := tx.(*gorm.DB).Where("token = ?", tokenString).Delete(Token{}).Error; err != nil {
 		return err
 	}
 

@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"fmt"
 	"strings"
+	"fmt"
 )
 
 // PaginatedList represents a paginated list of data items.

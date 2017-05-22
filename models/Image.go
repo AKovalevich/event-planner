@@ -3,8 +3,9 @@ package models
 import (
 	"github.com/AKovalevich/event-planner/utils"
 
-	"errors"
 	_ "github.com/jinzhu/gorm"
+	"errors"
+
 )
 
 type Image struct {

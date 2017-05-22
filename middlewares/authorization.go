@@ -1,14 +1,15 @@
 package middlewares
 
 import (
-	"github.com/dgrijalva/jwt-go"
-	jwtmiddleware "github.com/iris-contrib/middleware/jwt"
-	"github.com/AKovalevich/event-planner/app"
-	"gopkg.in/kataras/iris.v6"
 	"github.com/AKovalevich/event-planner/response"
+	"github.com/AKovalevich/event-planner/models"
+	"github.com/AKovalevich/event-planner/app"
+
+	jwtmiddleware "github.com/iris-contrib/middleware/jwt"
+	"github.com/dgrijalva/jwt-go"
+	"gopkg.in/kataras/iris.v6"
 	"strings"
 	"fmt"
-	"github.com/AKovalevich/event-planner/models"
 )
 
 type authorizationMiddleware struct {}
@@ -31,7 +32,7 @@ func NewAuthorization() *jwtmiddleware.Middleware {
 // fromAuthHeader is a "TokenExtractor" that takes a give context and extracts
 // the JWT token from the Authorization header.
 func FromAuthHeader(ctx *iris.Context) (string, error) {
-
+	scope := ctx.Get("request_scope")
 	authHeader := ctx.RequestHeader("Authorization")
 	if authHeader == "" {
 		return "", nil // No error, just no token
@@ -44,7 +45,7 @@ func FromAuthHeader(ctx *iris.Context) (string, error) {
 	}
 
 	// validate that it valid token
-	token, err := models.LoadToken(authHeaderParts[1])
+	token, err := models.LoadToken(authHeaderParts[1], scope.(app.RequestScope).GetTx())
 
 	if err != nil {
 		return "", fmt.Errorf("Service unavailable")
@@ -58,7 +59,7 @@ func FromAuthHeader(ctx *iris.Context) (string, error) {
 		return "", fmt.Errorf("The token has expired")
 	}
 
-	if err := token.User.LoadUserAssociations(); err != nil {
+	if err := token.User.LoadUserAssociations(scope.(app.RequestScope).GetTx()); err != nil {
 		return "", fmt.Errorf("Service unavailable")
 	}
 

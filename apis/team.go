@@ -1,11 +1,11 @@
 package apis
 
 import (
+	"github.com/AKovalevich/event-planner/response"
 	"github.com/AKovalevich/event-planner/models"
+	"github.com/AKovalevich/event-planner/app"
 
 	"gopkg.in/kataras/iris.v6"
-	"github.com/AKovalevich/event-planner/response"
-	"github.com/AKovalevich/event-planner/app"
 )
 
 // Create new team

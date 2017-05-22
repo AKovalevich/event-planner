@@ -3,12 +3,12 @@ package models
 import (
 	"github.com/AKovalevich/event-planner/utils"
 
-	"errors"
-	_ "github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/asaskevich/govalidator"
-	"time"
+	_ "github.com/jinzhu/gorm"
 	"github.com/jinzhu/gorm"
+	"errors"
+	"time"
 )
 
 //

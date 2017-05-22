@@ -1,11 +1,10 @@
 package response
 
 import (
-	"fmt"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"strings"
-
-	"gopkg.in/yaml.v2"
+	"fmt"
 )
 
 type (

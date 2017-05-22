@@ -8,10 +8,12 @@ import (
 	"gopkg.in/kataras/iris.v6"
 	"time"
 	"fmt"
+	"github.com/AKovalevich/event-planner/app"
 )
 
 //
 func AuthRegister(ctx *iris.Context) {
+	scope := ctx.Get("request_scope")
 	credentials := models.Credentials{}
 	err := ctx.ReadJSON(&credentials)
 	if err != nil {
@@ -20,7 +22,7 @@ func AuthRegister(ctx *iris.Context) {
 		return
 	}
 
-	existingUser, err := models.GetUserByEmail(credentials.Email)
+	existingUser, err := models.GetUserByEmail(credentials.Email, scope.(app.RequestScope).GetTx())
 	if err != nil {
 		res := response.InternalServerError("", err.Error())
 		ctx.JSON(res.StatusCode(), res.Struct())
@@ -38,7 +40,7 @@ func AuthRegister(ctx *iris.Context) {
 		Email: credentials.Email,
 		Password: utils.HashMd5(credentials.Password),
 	}
-	user, err = models.CreateUser(user)
+	user, err = models.CreateUser(user, scope.(app.RequestScope).GetTx())
 	if err != nil {
 		res := response.InternalServerError("", err.Error())
 		ctx.JSON(res.StatusCode(), res.Struct())
@@ -53,7 +55,7 @@ func AuthRegister(ctx *iris.Context) {
 		Status: false,
 		Users: users,
 	}
-	team, err = models.CreateTeam(team)
+	team, err = models.CreateTeam(team, scope.(app.RequestScope).GetTx())
 	if err != nil {
 		res := response.InternalServerError("", err.Error())
 		ctx.JSON(res.StatusCode(), res.Struct())
@@ -69,7 +71,7 @@ func AuthRegister(ctx *iris.Context) {
 		return
 	}
 
-	token, err := models.SaveToken(signedToken, expireToken, user)
+	token, err := models.SaveToken(signedToken, expireToken, user, scope.(app.RequestScope).GetTx())
 	if err != nil {
 		res := response.InternalServerError("", err.Error())
 		ctx.JSON(res.StatusCode(), res.Struct())
@@ -81,6 +83,7 @@ func AuthRegister(ctx *iris.Context) {
 
 //
 func AuthTokenRefresh(ctx *iris.Context) {
+	scope := ctx.Get("request_scope")
 	var tokenRefresh = struct{
 		Token string `json:"token"`
 		RefreshToken string `json:"refresh_token"`
@@ -93,7 +96,7 @@ func AuthTokenRefresh(ctx *iris.Context) {
 		return
 	}
 
-	token, err := models.LoadToken(tokenRefresh.Token)
+	token, err := models.LoadToken(tokenRefresh.Token, scope.(app.RequestScope).GetTx())
 	if err != nil {
 		res := response.InternalServerError("", err.Error())
 		ctx.JSON(res.StatusCode(), res.Struct())
@@ -120,7 +123,7 @@ func AuthTokenRefresh(ctx *iris.Context) {
 	}
 
 	// update token
-	err = token.UpdateToken(&token.User, ctx.Host())
+	err = token.UpdateToken(&token.User, ctx.Host(), scope.(app.RequestScope).GetTx())
 	if err != nil {
 		res := response.InternalServerError("", err.Error())
 		ctx.JSON(res.StatusCode(), res.Struct())
@@ -133,6 +136,7 @@ func AuthTokenRefresh(ctx *iris.Context) {
 
 //
 func AuthToken(ctx *iris.Context) {
+	scope := ctx.Get("request_scope")
 	credentials := models.Credentials{}
 	err := ctx.ReadJSON(&credentials)
 	if err != nil {
@@ -145,7 +149,7 @@ func AuthToken(ctx *iris.Context) {
 	hashedPassword := utils.HashMd5(credentials.Password)
 
 	// try to load user by password and email
-	user, err := models.GetUserByEmail(credentials.Email)
+	user, err := models.GetUserByEmail(credentials.Email, scope.(app.RequestScope).GetTx())
 	if err != nil {
 		res := response.NotFound("User")
 		ctx.JSON(res.StatusCode(), res.Struct())
@@ -154,7 +158,7 @@ func AuthToken(ctx *iris.Context) {
 
 	if credentials.Email == user.Email && utils.HashMd5(credentials.Password) == hashedPassword { // "test" - "098f6bcd4621d373cade4e832627b4f6"
 		// in case if already exists return token
-		existingToken, err := models.LoadTokenQuery(struct{id uint}{id: user.TokenID})
+		existingToken, err := models.LoadTokenQuery(struct{id uint}{id: user.TokenID}, scope.(app.RequestScope).GetTx())
 		if err != nil {
 			res := response.InternalServerError("", err.Error())
 			ctx.JSON(res.StatusCode(), res.Struct())
@@ -177,7 +181,7 @@ func AuthToken(ctx *iris.Context) {
 				return
 			}
 
-			token, err = models.SaveToken(signedToken, expireToken, user)
+			token, err = models.SaveToken(signedToken, expireToken, user, scope.(app.RequestScope).GetTx())
 			if err != nil {
 				res := response.InternalServerError("", err.Error())
 				ctx.JSON(res.StatusCode(), res.Struct())
