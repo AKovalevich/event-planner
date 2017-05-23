@@ -22,6 +22,8 @@ func (l *requestScopeMiddleware) Serve(ctx *iris.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer db.Close()
+
 	tx := db.Begin()
 	scope.SetTx(tx)
 

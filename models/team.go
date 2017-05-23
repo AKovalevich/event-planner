@@ -19,6 +19,7 @@ type Team struct {
 	Users []User `json:"users, omitempty" valid:"-" gorm:"many2many:team_user"`
 	Accounts []Account `json:"accounts, omitempty" valid:"-" gorm:"many2many:team_account"`
 	Status bool `json:"status" valid:"-"`
+	Events []Event
 }
 
 // Migrate Team structure
@@ -33,6 +34,32 @@ func TeamMigrate() error {
 	}
 
 	return nil
+}
+
+func (team *Team) HasUser(userID uint, tx interface{}) (bool) {
+	var existingTeam = &Team{}
+	if err := tx.(*gorm.DB).Preload("Users", "id = ?", userID).Where("id = ?", team.ID).First(&existingTeam).Error; err != nil {
+		return false
+	}
+
+	if len(existingTeam.Users) >= 1 {
+		return true
+	}
+
+	return false
+}
+
+func (team *Team) HasAccount(accountID uint, tx interface{}) (bool) {
+	var existingTeam = &Team{}
+	if err := tx.(*gorm.DB).Preload("Accounts", "id = ?", accountID).Where("id = ?", team.ID).First(&existingTeam).Error; err != nil {
+		return false
+	}
+
+	if len(existingTeam.Accounts) >= 1 {
+		return true
+	}
+
+	return false
 }
 
 //
@@ -66,7 +93,7 @@ func CreateTeam(team *Team, tx interface{}) (*Team, error) {
 }
 
 //
-func GetTeam(id string, tx interface{}) (*Team, error) {
+func GetTeam(id uint, tx interface{}) (*Team, error) {
 	team := &Team{}
 
 	if err := tx.(*gorm.DB).Where("id = ?", id).First(&team).Error; err != nil {
@@ -78,4 +105,15 @@ func GetTeam(id string, tx interface{}) (*Team, error) {
 	}
 
 	return team, nil
+}
+
+func GetTeamUsers(id string, tx interface{}) ([]User, error) {
+	var users = []User{}
+	var team = &Team{}
+
+	if err := tx.(*gorm.DB).Preload("Users").Where("id = ?", id).First(&team).Error; err != nil {
+		return users, err
+	}
+
+	return team.Users, nil
 }

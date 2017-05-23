@@ -3,7 +3,6 @@ domain = "example.com"
 debug = true
 secret = "SQ3tEErWMv" # What shouldn't be committed will be done
 
-
 [database]
     host = "localhost"
 	port = 3306

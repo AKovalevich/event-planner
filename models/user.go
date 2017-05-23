@@ -17,6 +17,7 @@ type User struct {
 	Password string `json:"password" valid:"required"`
 	Teams []Team `json:"teams" gorm:"many2many:team_user" valid:"-"`
 	TokenID uint `json:"token_id" valid:"-"`
+	Events []Event
 }
 
 // Migrate User structure

@@ -10,7 +10,7 @@ UNAUTHORIZED:
   developer_message: "Authentication failed: {error}"
 
 INVALID_DATA:
-  message: "There is some problem with the data you submitted. See \"details\" for more information."
+  message: "There is some problem with the data you submitted."
 
 ENTITY_ALREADY_EXISTS:
   message: "{entity} already exists"

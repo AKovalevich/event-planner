@@ -3,6 +3,9 @@ package utils
 import (
 	"strings"
 	"fmt"
+
+	"gopkg.in/kataras/iris.v6"
+	"github.com/spf13/cast"
 )
 
 // PaginatedList represents a paginated list of data items.
@@ -12,6 +15,31 @@ type PaginatedList struct {
 	PageCount  int         `json:"page_count"`
 	TotalCount int         `json:"total_count"`
 	Items      interface{} `json:"items"`
+}
+
+const (
+	DEFAULT_PAGE_SIZE int = 100
+	MAX_PAGE_SIZE     int = 1000
+)
+
+func GetPaginatedListFromRequest(ctx *iris.Context, count int) *PaginatedList {
+	page := parseInt(ctx.URLParam("page"), 1)
+	perPage := parseInt(ctx.URLParam("per_page"), DEFAULT_PAGE_SIZE)
+	if perPage <= 0 {
+		perPage = DEFAULT_PAGE_SIZE
+	}
+	if perPage > MAX_PAGE_SIZE {
+		perPage = MAX_PAGE_SIZE
+	}
+	return NewPaginatedList(page, perPage, count)
+}
+
+func parseInt(value string, defaultValue int) int {
+	if value == "" {
+		return defaultValue
+	}
+
+	return cast.ToInt(value)
 }
 
 // NewPaginatedList creates a new Paginated instance.
