@@ -18,6 +18,7 @@ func GetDB() (*gorm.DB, error) {
 			break
 		}
 		println("Connect to database failed. Try to reconnect to database...")
+		println(err.Error())
 		println("DB user: " + app.Config().DataBase.User)
 		println("DB name: " + app.Config().DataBase.Name)
 		time.Sleep(5 * time.Second)
