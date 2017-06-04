@@ -1,0 +1,10 @@
+#/etc/systemd/system/h2o.service
+Description=H2O - the optimized HTTP/1, HTTP/2 server
+After=network.target remote-fs.target nss-lookup.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/h2o -c /var/www/services/valhalla/h2o.conf
+ExecReload=/bin/kill -HUP ${MAINPID}
+ExecStop=/bin/kill -TERM ${MAINPID}
+RemainAfterExit=yes
