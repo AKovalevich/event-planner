@@ -4,7 +4,7 @@ services:
   valhalla:
     image: lkwg82/h2o-http2-server
     ports:
-     - "8080:8080"
+     - "80:80"
      - "443:443"
     volumes:
        - "/etc/h2o:/etc/h2o"
